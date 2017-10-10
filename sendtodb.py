@@ -5,6 +5,16 @@ import sys
 import traceback
 import math
 import sqlite3
+from enum import Enum
+
+MAC = 0
+INI = 1
+FIN = 2
+PWR = 3 
+DATA = 4
+ESSID = 5
+DIST = 6
+
 
 def create_table(conn, cur):
     cur.execute("""CREATE TABLE distance (
@@ -32,12 +42,17 @@ def table_isexist(conn, cur):
     return True  
 
 
+def insert_data(conn, cur, data):
+    cur.execute("""
+        INSERT INTO distance VALUES(NULL,?,?,?)
+        """, (data[MAC], data[PWR], data[DIST],))
+    conn.commit()
+
+
 def main(argv):
     filename = argv[0] + "-01.csv"
     essid = argv[1]
     interval = float(argv[2])
-    essid_index = 5
-    pwr_index = 3 
     dbname = 'distance.db'
     (conn, cur) = getdb(dbname)
     if table_isexist(conn, cur) == False:
@@ -50,14 +65,14 @@ def main(argv):
                 reader = csv.reader(fin)
                 header = next(reader)
                 for row in reader:
-                    if len(row) > essid_index and row[essid_index].lstrip() == essid:
+                    if len(row) > ESSID and row[ESSID].lstrip() == essid:
                         with open("output", "a") as fout:
                             # 測定不能なホストを飛ばす
-                            if int(row[pwr_index]) == -1: 
+                            if int(row[PWR]) == -1: 
                                 continue
-                            distance = math.exp(1) ** (-1*(int(row[pwr_index])+36)/8.7)
-                            fout.writelines(row)
-                            fout.write("\n")
+                            distance = math.exp(1) ** (-1*(int(row[PWR])+36)/8.7)
+                            row.append(distance)
+                            insert_data(conn, cur, row)
             time.sleep(interval)
         except IOError as e:
             print("IOError")
