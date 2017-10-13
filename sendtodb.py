@@ -13,7 +13,7 @@ FIN = 2
 PWR = 3 
 DATA = 4
 ESSID = 5
-DIST = 6
+DIST = 7
 
 
 def create_table(conn, cur):
@@ -32,7 +32,7 @@ def getdb(dbname):
     return (conn, cur)
 
 
-def table_isexist(conn, cur):
+def isexist(conn, cur):
     cur.execute("""
         SELECT COUNT(*) FROM sqlite_master 
         WHERE TYPE='table' AND name='distance'
@@ -49,14 +49,17 @@ def insert_data(conn, cur, data):
     conn.commit()
 
 
+def get_distance(pwr):
+    return int(math.exp(1) ** (-1*(int(pwr)+40)/9))
+
+
 def main(argv):
-    filename = argv[0] + "-01.csv"
+    filename = argv[0]
     essid = argv[1]
     interval = float(argv[2])
     dbname = 'distance.db'
     (conn, cur) = getdb(dbname)
-    if table_isexist(conn, cur) == False:
-        print("not exist")
+    if isexist(conn, cur) == False:
         create_table(conn, cur)
     
     while True:
@@ -66,17 +69,13 @@ def main(argv):
                 header = next(reader)
                 for row in reader:
                     if len(row) > ESSID and row[ESSID].lstrip() == essid:
-                        with open("output", "a") as fout:
-                            # 測定不能なホストを飛ばす
-                            if int(row[PWR]) == -1: 
-                                continue
-                            distance = math.exp(1) ** (-1*(int(row[PWR])+36)/8.7)
-                            row.append(distance)
-                            insert_data(conn, cur, row)
+                        # 測定不能なホストを飛ばす
+                        if int(row[PWR]) == -1:
+                            continue
+                        distance = get_distance(row[PWR])
+                        row.append(distance)
+                        insert_data(conn, cur, row)
             time.sleep(interval)
-        except IOError as e:
-            print("IOError")
-            sys.exit(1)
 
         except KeyboardInterrupt:
             sys.exit(0)
