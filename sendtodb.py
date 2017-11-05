@@ -6,12 +6,13 @@ import traceback
 import math
 import sqlite3
 import uuid
+import json
 
 MAC = 0
 INI = 1
 FIN = 2
 PWR = 3 
-DATA = 4
+PAC = 4
 BSSID = 5
 DIST = 7
 RPI_MAC = 8
@@ -19,6 +20,7 @@ RPI_MAC = 8
 MINCUL = 6
 
 def create_table(conn, cur):
+    print("creating table...")
     cur.execute("""CREATE TABLE distance (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
         macaddr    TEXT,
@@ -29,13 +31,13 @@ def create_table(conn, cur):
     conn.commit()
 
 
-def getdb(dbname): 
+def get_db(dbname):
     conn = sqlite3.connect(dbname)
     cur = conn.cursor()
     return (conn, cur)
 
 
-def isexist(conn, cur):
+def is_exist(conn, cur):
     cur.execute("""
         SELECT COUNT(*) FROM sqlite_master 
         WHERE TYPE='table' AND name='distance'
@@ -48,7 +50,7 @@ def isexist(conn, cur):
 def insert_data(conn, cur, data):
     cur.execute("""
         INSERT INTO distance VALUES(NULL,?,?,?,?)
-        """, (data[MAC], data[PWR], data[DIST], data[RPI_MAC]))
+        """, (data["MAC"], data["PWR"], data["DIST"], data["RPI_MAC"]))
     conn.commit()
 
 
@@ -62,32 +64,36 @@ def main(argv):
     bssid = '' #APのMACaddr
     interval = float(argv[2])
     dbname = 'distance.db'
-    (conn, cur) = getdb(dbname)
-    if isexist(conn, cur) == False:
+    colmAP = ["BSSID", "FIR", "LAS", "CHN", "SPD", "PRY", "CIP", "ATH", "PWR", "BCN", "IV", "IP", "LEN", "ESSID", "KEY"]
+    colmSTA = ["MAC", "FIR", "LAS", "PWR", "PAC", "BSSID", "ESSID", "DIST", "RPI_MAC"]
+
+    rpi_mac = hex(uuid.getnode())[2:]
+    (conn, cur) = get_db(dbname)
+    if not is_exist(conn, cur):
         create_table(conn, cur)
     
     while True:
         try:
             with open(filename, 'r', newline='') as fin:
-                reader = csv.reader(fin)
-                header = next(reader)
+                reader = csv.DictReader(fin, colmAP)
                 # APのBSSIDを特定
                 for row in reader:
-                    if row[-1].lstrip() == essid:
-                        bssid = row[0].lstrip()
+                    if row["BSSID"].lstrip() == "Station MAC":
                         break
+                    if row["ESSID"].lstrip() == essid:
+                        bssid = row["BSSID"].lstrip()
 
+                reader.fieldnames = colmSTA
                 for row in reader:
-                    if len(row) >= MINCUL and\
-                                    row[BSSID].lstrip() == bssid and\
+                    if row["BSSID"].lstrip() == bssid:
                         # 測定不能なホストを飛ばす
-                        if int(row[PWR]) == -1:
+                        if int(row["PWR"]) == -1:
                             continue
-                        distance = get_distance(row[PWR])
-                        rpi_mac = hex(uuid.getnode())[2:]
-                        row.append(distance)
-                        row.append(rpi_mac)
+                        distance = get_distance(row["PWR"])
+                        row["DIST"] = distance
+                        row["RPI_MAC"] = rpi_mac
                         insert_data(conn, cur, row)
+                        print("database was updated!")
 
             time.sleep(interval)
 
