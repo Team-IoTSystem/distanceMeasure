@@ -49,10 +49,10 @@ def get_distance(pwr):
     return int(math.exp(1) ** (-1*(int(pwr)+40)/9))
 
 
-def post_data(row, server):
-    dist = "http://" + server + "/test"
+def post_data(data, server, endpoint):
+    dist = "http://" + server + endpoint
     headertype = {"Content-Type": "application/json"}
-    requests.post(dist, json.dumps(row), headers=headertype)
+    requests.post(dist, json.dumps(data), headers=headertype)
 
 
 def main():
@@ -61,6 +61,7 @@ def main():
     bssid = '' #APのMACaddr
     interval = float(sys.argv[3])
     server = sys.argv[4] # サーバーのIP
+    endpoint = sys.argv[5]
     dbname = 'distance.db'
     colmAP = ["BSSID", "FIR", "LAS", "CHN", "SPD", "PRY", "CIP", "ATH", "PWR", "BCN", "IV", "IP", "LEN", "ESSID", "KEY"]
     colmSTA = ["MAC", "FIR", "LAS", "PWR", "PAC", "BSSID", "ESSID", "DIST", "RPI_MAC"]
@@ -90,8 +91,9 @@ def main():
                         distance = get_distance(row["PWR"])
                         row["DIST"] = distance
                         row["RPI_MAC"] = rpi_mac
-                        insert_data(conn, cur, row)
-                        post_data(row, server)
+                        data = {"MAC": row["MAC"], "PWR": int(row["PWR"]), "DIST": row["DIST"], "RPI_MAC": row["RPI_MAC"]}
+                        insert_data(conn, cur, data)
+                        post_data(data, server, endpoint)
                         print("database was updated!")
 
             time.sleep(interval)
