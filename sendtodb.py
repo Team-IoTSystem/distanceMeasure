@@ -7,17 +7,8 @@ import math
 import sqlite3
 import uuid
 import json
+import requests
 
-MAC = 0
-INI = 1
-FIN = 2
-PWR = 3 
-PAC = 4
-BSSID = 5
-DIST = 7
-RPI_MAC = 8
-
-MINCUL = 6
 
 def create_table(conn, cur):
     print("creating table...")
@@ -58,11 +49,18 @@ def get_distance(pwr):
     return int(math.exp(1) ** (-1*(int(pwr)+40)/9))
 
 
-def main(argv):
-    filename = argv[0]
-    essid = argv[1] #可読なAPの識別子
+def post_data(row, server):
+    dist = "http://" + server + "/test"
+    headertype = {"Content-Type": "application/json"}
+    requests.post(dist, json.dumps(row), headers=headertype)
+
+
+def main():
+    filename = sys.argv[1]
+    essid = sys.argv[2] #可読なAPの識別子
     bssid = '' #APのMACaddr
-    interval = float(argv[2])
+    interval = float(sys.argv[3])
+    server = sys.argv[4] # サーバーのIP
     dbname = 'distance.db'
     colmAP = ["BSSID", "FIR", "LAS", "CHN", "SPD", "PRY", "CIP", "ATH", "PWR", "BCN", "IV", "IP", "LEN", "ESSID", "KEY"]
     colmSTA = ["MAC", "FIR", "LAS", "PWR", "PAC", "BSSID", "ESSID", "DIST", "RPI_MAC"]
@@ -78,14 +76,14 @@ def main(argv):
                 reader = csv.DictReader(fin, colmAP)
                 # APのBSSIDを特定
                 for row in reader:
-                    if row["BSSID"].lstrip() == "Station MAC":
+                    if row["BSSID"].strip() == "Station MAC":
                         break
-                    if row["ESSID"].lstrip() == essid:
-                        bssid = row["BSSID"].lstrip()
+                    if row["ESSID"].strip() == essid:
+                        bssid = row["BSSID"].strip()
 
                 reader.fieldnames = colmSTA
                 for row in reader:
-                    if row["BSSID"].lstrip() == bssid:
+                    if row["BSSID"].strip() == bssid:
                         # 測定不能なホストを飛ばす
                         if int(row["PWR"]) == -1:
                             continue
@@ -93,6 +91,7 @@ def main(argv):
                         row["DIST"] = distance
                         row["RPI_MAC"] = rpi_mac
                         insert_data(conn, cur, row)
+                        post_data(row, server)
                         print("database was updated!")
 
             time.sleep(interval)
@@ -106,4 +105,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
