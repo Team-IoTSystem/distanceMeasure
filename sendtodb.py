@@ -8,7 +8,7 @@ import uuid
 import json
 import requests
 import dbcontroller
-from certidata import *
+from certification_data import *
 
 
 def get_distance(pwr):
@@ -69,7 +69,7 @@ def main():
         except KeyboardInterrupt:
             sys.exit(0)
 
-        except:
+        except Exception:
             print(traceback.format_exc()) 
             sys.exit(1)
 
