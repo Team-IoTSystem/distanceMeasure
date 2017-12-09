@@ -20,5 +20,5 @@ sleep 10
 filename=$(ls -t $filepref* | head -1)
 echo $filename
 
-python sendtodb.py $filename ${2:-RA-L-2.4n} 5 ${3:-192.168.11.20} ${4:-/test}
+python3 sendtodb.py $filename ${2:-RA-L-2.4n} 5 ${3:-192.168.11.20} ${4:-/test}
 

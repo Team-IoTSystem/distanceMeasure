@@ -1,5 +1,0 @@
-host = '192.168.11.20'
-user = 'raspi'
-passwd = 'raspberry'
-db = 'DistanceMeasure'
-charset = ''
