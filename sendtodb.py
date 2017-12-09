@@ -8,7 +8,7 @@ import uuid
 import json
 import requests
 import dbcontroller
-from certidata import *
+from certification_data import *
 
 
 def get_distance(pwr):
@@ -51,6 +51,7 @@ def main():
 
                 reader.fieldnames = colmSTA
                 for row in reader:
+
                     if row["BSSID"].strip() == bssid:
                         # 測定不能なホストを飛ばす
                         if int(row["PWR"]) == -1:
@@ -69,7 +70,7 @@ def main():
         except KeyboardInterrupt:
             sys.exit(0)
 
-        except:
+        except Exception:
             print(traceback.format_exc()) 
             sys.exit(1)
 

@@ -1,5 +1,6 @@
 import dbcontroller
-from certidata import *
+from certification_data import *
+
 
 def main():
     conn, cur = dbcontroller.mysql_connect(host, user, passwd, db, charset)
