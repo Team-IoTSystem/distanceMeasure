@@ -33,9 +33,9 @@ def main():
     colmSTA = ["MAC", "FIR", "LAS", "PWR", "PAC", "BSSID", "ESSID", "DIST", "RPI_MAC"]
 
     rpi_mac = hex(uuid.getnode())[2:]
-    (sqlite_conn, sqlite_cur) = dbcontroller.sqlite_connect_db(dbname)
+    # (sqlite_conn, sqlite_cur) = dbcontroller.sqlite_connect_db(dbname)
     (mysql_conn, mysql_cur) = dbcontroller.mysql_connect(host, user, passwd, db, charset)
-    dbcontroller.sqlite_create_table(sqlite_conn, sqlite_cur)
+    # dbcontroller.sqlite_create_table(sqlite_conn, sqlite_cur)
     dbcontroller.mysql_create_table(mysql_conn, mysql_cur)
     
     while True:
@@ -51,7 +51,8 @@ def main():
 
                 reader.fieldnames = colmSTA
                 for row in reader:
-                    if row["BSSID"].strip() == bssid:
+                    if row["BSSID"] and row["BSSID"].strip() == bssid:
+                        print(row)
                         # 測定不能なホストを飛ばす
                         if int(row["PWR"]) == -1:
                             continue
@@ -59,10 +60,10 @@ def main():
                         row["DIST"] = distance
                         row["RPI_MAC"] = rpi_mac
                         data = {"MAC": row["MAC"], "PWR": int(row["PWR"]), "DIST": row["DIST"], "RPI_MAC": row["RPI_MAC"]}
-                        dbcontroller.sqlite_insert_data(sqlite_conn, sqlite_cur, data)
+                        # dbcontroller.sqlite_insert_data(sqlite_conn, sqlite_cur, data)
                         dbcontroller.mysql_insert_data(mysql_conn, mysql_cur, data)
-                        post_data(data, server_ip, endpoint)
-                        print("database was updated!")
+                        # post_data(data, server_ip, endpoint)
+                        print(data)
 
             time.sleep(interval)
 
