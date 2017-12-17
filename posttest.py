@@ -1,8 +1,8 @@
 import json
-import urllib.request
 import requests
 
+endpoint = "http://192.168.11.20/test"
 s = requests.Session()
 headertype = {"Content-Type": "application/json"}
-data={"mac": "hoge", "id": 2}
-r = s.post("http://192.168.11.20/test", json.dumps(data), headers=headertype)
+data = {"id": 2, "mac": "hoge", }
+r = s.post(endpoint, json.dumps(data), headers=headertype)

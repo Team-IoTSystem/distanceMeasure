@@ -28,7 +28,6 @@ def main():
     interval = float(sys.argv[3])
     server_ip = sys.argv[4]
     endpoint = sys.argv[5]
-    dbname = 'distance.db'
     colmAP = ["BSSID", "FIR", "LAS", "CHN", "SPD", "PRY", "CIP", "ATH", "PWR", "BCN", "IV", "IP", "LEN", "ESSID", "KEY"]
     colmSTA = ["MAC", "FIR", "LAS", "PWR", "PAC", "BSSID", "ESSID", "DIST", "RPI_MAC"]
 
