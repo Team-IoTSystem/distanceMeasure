@@ -12,7 +12,11 @@ from certification_data import *
 
 
 def get_distance(pwr):
-    return int(math.exp(1) ** (-1*(int(pwr)+40)/9))
+    border = 10
+    distance = int(math.exp(1) ** (-1*(int(pwr)+40)/9))
+    if distance < border:
+        distance = border
+    return distance
 
 
 def post_data(data, server_ip, endpoint):
@@ -22,6 +26,7 @@ def post_data(data, server_ip, endpoint):
 
 
 def main():
+    debug = True
     filename = sys.argv[1]
     essid = sys.argv[2]
     bssid = ''
@@ -51,7 +56,6 @@ def main():
                 reader.fieldnames = colmSTA
                 for row in reader:
                     if row["BSSID"] and row["BSSID"].strip() == bssid:
-                        print(row)
                         # 測定不能なホストを飛ばす
                         if int(row["PWR"]) == -1:
                             continue
@@ -62,8 +66,8 @@ def main():
                         # dbcontroller.sqlite_insert_data(sqlite_conn, sqlite_cur, data)
                         dbcontroller.mysql_insert_data(mysql_conn, mysql_cur, data)
                         # post_data(data, server_ip, endpoint)
-                        print(data)
-
+                        if debug and data["MAC"] == "84:89:AD:8D:85:F6":
+                            print("MAC:{}, PWR:{}".format(data["MAC"], data["PWR"]))
             time.sleep(interval)
 
         except KeyboardInterrupt:
