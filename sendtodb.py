@@ -13,8 +13,8 @@ from certification_data import *
 
 def get_distance(pwr):
     border = 10
-    distance = int(math.exp(1) ** (-1*(int(pwr)+40)/9))
-    if distance < border:
+    distance = int(math.exp(1) ** (-1*(int(pwr)+33)/9))
+    if distance > border:
         distance = border
     return distance
 
@@ -31,8 +31,6 @@ def main():
     essid = sys.argv[2]
     bssid = ''
     interval = float(sys.argv[3])
-    server_ip = sys.argv[4]
-    endpoint = sys.argv[5]
     colmAP = ["BSSID", "FIR", "LAS", "CHN", "SPD", "PRY", "CIP", "ATH", "PWR", "BCN", "IV", "IP", "LEN", "ESSID", "KEY"]
     colmSTA = ["MAC", "FIR", "LAS", "PWR", "PAC", "BSSID", "ESSID", "DIST", "RPI_MAC"]
 
@@ -57,17 +55,18 @@ def main():
                 for row in reader:
                     if row["BSSID"] and row["BSSID"].strip() == bssid:
                         # 測定不能なホストを飛ばす
-                        if int(row["PWR"]) == -1:
+                        pwr = int(row["PWR"])
+                        if pwr == -1 or pwr == 0:
                             continue
                         distance = get_distance(row["PWR"])
                         row["DIST"] = distance
                         row["RPI_MAC"] = rpi_mac
-                        data = {"MAC": row["MAC"], "PWR": int(row["PWR"]), "DIST": row["DIST"], "RPI_MAC": row["RPI_MAC"]}
+                        data = {"MAC": row["MAC"], "PWR": pwr, "DIST": row["DIST"], "RPI_MAC": row["RPI_MAC"]}
                         # dbcontroller.sqlite_insert_data(sqlite_conn, sqlite_cur, data)
                         dbcontroller.mysql_insert_data(mysql_conn, mysql_cur, data)
                         # post_data(data, server_ip, endpoint)
-                        if debug and data["MAC"] == "84:89:AD:8D:85:F6":
-                            print("MAC:{}, PWR:{}".format(data["MAC"], data["PWR"]))
+                        if debug and (data["MAC"] == "30:AE:A4:03:8A:44" or data["MAC"] == "24:0A:C4:11:9A:30"):
+                            print("MAC:{}, PWR:{}, DIST{}".format(data["MAC"], data["PWR"], data["DIST"]))
             time.sleep(interval)
 
         except KeyboardInterrupt:
