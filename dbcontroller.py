@@ -1,5 +1,8 @@
-import sqlite3
 import MySQLdb
+try:
+    import sqlite3
+except ImportError:
+    print("sqlite3 is not installed. You can only use MySQL.")
 
 
 def sqlite_connect_db(dbname):
